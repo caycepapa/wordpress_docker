@@ -1,5 +1,4 @@
 version: '3'
-test: test
 services:
   db:
     # M1用　ARMアーキテクチャのプラットフォームを想定
