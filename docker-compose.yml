@@ -1,0 +1,59 @@
+version: '3'
+services:
+  db:
+    # M1用　ARMアーキテクチャのプラットフォームを想定
+    # platform: linux/arm64
+    image: mariadb:10.11
+    volumes:
+      - ./db/:/var/lib/mysql:delegated
+      # windowsの場合→　- db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+  wordpress:
+    image: wordpress:latest
+    depends_on:
+      - db 
+    ports:
+      - "80:80"
+    volumes:
+      - ./public/:/var/www/html/:delegated
+      - ./docker/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+      - ./docker/php.ini:/usr/local/etc/php/php.ini
+      # windowsの場合→　- ./public/:/var/www/html/
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+
+  wpcli:
+    image: wordpress:cli-php7.4
+    working_dir: /var/www/html
+    depends_on:
+      - wordpress
+      - db
+    volumes:
+      - ./public/:/var/www/html
+    command: "--info"
+    user: xfs
+
+  phpmyadmin:
+      image: phpmyadmin/phpmyadmin
+      depends_on:
+        - db
+      environment:
+        - PMA_ARBITRARY=1
+        - PMA_HOSTS=db
+        - PMA_USER=wordpress
+        - PMA_PASSWORD=wordpress
+      ports:
+        - "3002:80"
+      volumes:
+        - ./docker/phpmyadmin/sessions:/sessions:delegated
+        # windowsの場合→　- ./docker/phpmyadmin/sessions:/sessions
+        - ./docker/phpmyadmin/phpmyadmin-misc.ini:/usr/local/etc/php/conf.d/phpmyadmin-misc.ini
+volumes:
+  db_data:
